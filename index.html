@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text-to-Speech</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #2c3e50;
+            font-family: Arial, sans-serif;
+            color: #ecf0f1;
+        }
+        .container {
+            text-align: center;
+            background: #34495e;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+        }
+        textarea {
+            width: 96%;
+            height: 100px;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #1abc9c;
+            resize: none;
+            font-size: 16px;
+            font-family: inherit;
+            color: #2c3e50;
+        }
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #ecf0f1;
+            background: #1abc9c;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #16a085;
+        }
+        #status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #bdc3c7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Text-to-Speech Reader</h1>
+        <textarea id="textInput" placeholder="Type something..."></textarea><br>
+        <button id="readText">Read Aloud</button>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        const readButton = document.getElementById('readText');
+        const status = document.getElementById('status');
+
+        let selectedVoice = null;
+
+        // Load available voices
+        const loadVoices = () => {
+            const voices = window.speechSynthesis.getVoices();
+            selectedVoice = voices.find(voice => 
+                voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.localService
+            ) || voices[0]; // Fallback to the first available voice
+        };
+
+        // Ensure voices are loaded
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        loadVoices();
+
+        readButton.addEventListener('click', () => {
+            const text = textInput.value.trim();
+            if (!text) {
+                alert("Please enter some text!");
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.voice = selectedVoice;
+            utterance.rate = 1; // Normal speed
+            utterance.pitch = 1; // Normal pitch
+
+            utterance.onstart = () => status.textContent = "Reading started...";
+            utterance.onend = () => status.textContent = "Reading completed!";
+            utterance.onerror = () => status.textContent = "An error occurred during reading.";
+
+            window.speechSynthesis.speak(utterance);
+        });
+
+        // Ensure speech continues regardless of tab state
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && window.speechSynthesis.speaking) {
+                window.speechSynthesis.resume();
+            }
+        });
+    </script>
+</body>
+</html>
